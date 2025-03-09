@@ -10,7 +10,8 @@ import org.springframework.context.ApplicationContext;
 @SpringBootApplication
 public class FoodMasterApplication {
 
-    public static void main(String[] args) {
+    public static void main(String
+                                    [] args) {
         ApplicationContext context = SpringApplication.run(FoodMasterApplication.class, args);
 
         // Получаем бин FoodMasterBot и регистрируем его в TelegramBotsApi
