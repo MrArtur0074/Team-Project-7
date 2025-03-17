@@ -7,6 +7,10 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
+import java.io.File;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -16,6 +20,9 @@ public class FoodMasterBot extends TelegramLongPollingBot {
 
     private final Map<Long, String> userStates = new HashMap<>();
     private final Map<Long, UserData> userDataMap = new HashMap<>();
+
+    @Autowired
+    private SpoonacularService spoonacularService;
 
     @Override
     public String getBotUsername() {
@@ -34,6 +41,7 @@ public class FoodMasterBot extends TelegramLongPollingBot {
             String userMessage = update.getMessage().getText().trim();
 
             if (userMessage.equalsIgnoreCase("/start")) {
+                sendPhoto(chatId, "src/main/resources/static/images/FoodMaster.webp");
                 sendStartMenu(chatId);
             } else {
                 handleUserInput(chatId, userMessage);
@@ -43,19 +51,177 @@ public class FoodMasterBot extends TelegramLongPollingBot {
             long chatId = update.getCallbackQuery().getMessage().getChatId();
             int messageId = update.getCallbackQuery().getMessage().getMessageId();
 
+            System.out.println("Received callback: " + callbackData);  // Печатаем callbackData
+
             if (callbackData.equals("CALCULATE_KBZU_NORM")) {
                 askForHeight(chatId);
             } else if (callbackData.equals("GENDER_MALE") || callbackData.equals("GENDER_FEMALE")) {
                 saveGender(chatId, callbackData);
             } else if (callbackData.startsWith("ACTIVITY_")) {
                 saveActivityLevel(chatId, callbackData);
-            }   else if (callbackData.equals("CALCULATE_KBZU")) {
+            } else if (callbackData.equals("CALCULATE_KBZU")) {
                 // Логика для расчета КБЖУ
                 calculateKBZU(chatId);
+            } else if (callbackData.equals("BACK_TO_MAIN_MENU")) {
+                sendStartMenu(chatId);
             }
+            if (callbackData.equals("RANDOM_RECIPE") || callbackData.equals("MORE_RECIPE")) {
+                String recipeMessage = spoonacularService.getRandomRecipe();
 
+                InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+                List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+
+                InlineKeyboardButton moreButton = new InlineKeyboardButton();
+                moreButton.setText("🔄 Еще");
+                moreButton.setCallbackData("MORE_RECIPE");
+
+                InlineKeyboardButton backButton = new InlineKeyboardButton();
+                backButton.setText("🔙 Назад в главное меню");
+                backButton.setCallbackData("BACK_TO_MAIN_MENU");
+
+                buttons.add(Collections.singletonList(moreButton));
+                buttons.add(Collections.singletonList(backButton));
+
+                markup.setKeyboard(buttons);
+
+                sendMessageWithKeyboard(chatId, recipeMessage, markup);
+            }
+            if (callbackData.equals("SEARCH_RECIPE")) {
+                String responseText = "🍽️ Выберите категорию блюда:";
+
+                // Создание списка кнопок
+                InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+                List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+
+                // Категории блюд
+                String[] categories = {"Завтрак", "Обед", "Ужин", "Десерты", "Вегетарианское"};
+
+                for (String category : categories) {
+                    InlineKeyboardButton button = new InlineKeyboardButton();
+                    button.setText(category);
+                    button.setCallbackData("CATEGORY_" + category.toUpperCase()); // Callback для обработки
+                    rowsInline.add(Collections.singletonList(button));
+                }
+
+                markupInline.setKeyboard(rowsInline);
+
+                // Создание сообщения с кнопками
+                SendMessage message = new SendMessage();
+                message.setChatId(chatId);
+                message.setText(responseText);
+                message.setReplyMarkup(markupInline);
+
+                try {
+                    execute(message);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            } else if (callbackData.startsWith("CATEGORY_")) {
+                String category = callbackData.replace("CATEGORY_", ""); // Получаем категорию
+                userStates.put(chatId, "AWAITING_DISH_NAME:" + category); // Запоминаем, что ждем название
+
+                SendMessage message = new SendMessage();
+                message.setChatId(chatId);
+                message.setText("🔎 Введите название блюда в категории *" + category + "*:");
+                message.enableMarkdown(true);
+
+                // Добавляем кнопку "Назад"
+                InlineKeyboardButton backButton = new InlineKeyboardButton();
+                backButton.setText("🔙 Назад в главное меню");
+                backButton.setCallbackData("BACK_TO_MAIN_MENU");
+
+                InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+                keyboardMarkup.setKeyboard(Collections.singletonList(Collections.singletonList(backButton)));
+
+                message.setReplyMarkup(keyboardMarkup);
+
+                try {
+                    execute(message);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            } else if (callbackData.equals("TRY_AGAIN_BUTTON")) {
+                // Запрашиваем новое название блюда
+                String responseMessage = "🔍 Пожалуйста, введите название блюда, которое вы хотите найти:";
+
+                // Отправляем сообщение с запросом на ввод
+                sendMessage(chatId, responseMessage);
+
+                // Обновляем состояние пользователя, чтобы он снова ввел название блюда
+                userStates.put(chatId, "AWAITING_DISH_NAME:");
+            }
+            if (callbackData.equals("SEARCH_RECIPE_BY_TIME")) {
+                // Создаем кнопки с выбором времени
+                String responseText = "⏱️ Выберите время приготовления:";
+
+                InlineKeyboardMarkup markupInline = createTimeButtons();
+
+                SendMessage message = new SendMessage();
+                message.setChatId(chatId);
+                message.setText(responseText);
+                message.setReplyMarkup(markupInline);
+
+                try {
+                    execute(message);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            } else if (callbackData.equals("TIME_15") || callbackData.equals("TIME_15_30") || callbackData.equals("TIME_30_45") || callbackData.equals("TIME_45_60") || callbackData.equals("TIME_60")) {
+                // Получаем рецепты по выбранному времени
+                System.out.println("Selected time range: " + callbackData);  // Выводим выбранное время для отладки
+                String recipes = spoonacularService.getRecipesByTime(callbackData);
+
+                SendMessage message = new SendMessage();
+                message.setChatId(chatId);
+                message.setText(recipes);
+
+                try {
+                    execute(message);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            } if (callbackData.equals("SEARCH_BY_INGREDIENTS")) {
+                String responseText = "🍳 Пожалуйста, введите ингредиенты, разделённые запятыми (например, курица, помидоры, рис):";
+
+                sendMessage(chatId, responseText);
+
+                // Запоминаем, что теперь бот ожидает ввод ингредиентов
+                userStates.put(chatId, "AWAITING_INGREDIENTS");
+            }
         }
     }
+
+    // Метод для создания кнопок с выбором времени
+    private InlineKeyboardMarkup createTimeButtons() {
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+
+        String[] times = {"До 15 минут", "15-30 минут", "30-45 минут", "45-60 минут", "60 минут и больше"};
+        String[] callbackData = {"TIME_15", "TIME_15_30", "TIME_30_45", "TIME_45_60", "TIME_60"};
+
+        for (int i = 0; i < times.length; i++) {
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(times[i]);  // Текст на русском
+            button.setCallbackData(callbackData[i]);  // Английский callbackData
+            rowsInline.add(Collections.singletonList(button));
+        }
+
+        markupInline.setKeyboard(rowsInline);
+        return markupInline;
+    }
+
+    public void sendPhoto(Long chatId, String photoPath) {
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(chatId.toString());
+        sendPhoto.setPhoto(new InputFile(new File(photoPath))); // Локальный файл
+
+        try {
+            execute(sendPhoto);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private void calculateKBZU(long chatId) {
         UserData userData = userDataMap.get(chatId);
@@ -66,6 +232,7 @@ public class FoodMasterBot extends TelegramLongPollingBot {
 
         // Расчет нормы КБЖУ
         double bmr = 0;
+
         if ("Мужской".equals(userData.getGender())) {
             bmr = 88.362 + (13.397 * userData.getWeight()) + (4.799 * userData.getHeight()) - (5.677 * userData.getAge());
         } else if ("Женский".equals(userData.getGender())) {
@@ -89,10 +256,51 @@ public class FoodMasterBot extends TelegramLongPollingBot {
         // Расчет общего уровня КБЖУ
         double totalKBZU = bmr * activityMultiplier;
 
-        String resultMessage = String.format("📊 Ваша норма КБЖУ:\n- Основной обмен (BMR): %.2f\n- Уровень активности: %s\n- Итого: %.2f ккал в день", bmr, userData.getActivityLevel(), totalKBZU);
-        sendMessage(chatId, resultMessage);
+        // Рекомендации для похудения и набора массы
+        double caloriesToLoseWeight = totalKBZU - totalKBZU * 0.15; // 15% дефицит для похудения
+        double caloriesToGainWeight = totalKBZU + totalKBZU * 0.15; // 15% избыток для набора массы
+
+        // Формирование текста с результатами
+        String resultMessage = String.format(
+                "📊 Ваша норма КБЖУ:\n" +
+                        "- Основной обмен (BMR): %.2f\n" +
+                        "- Уровень активности: %s\n" +
+                        "- Итого: %.2f ккал в день\n\n" +
+                        "💡 **Рекомендации по калориям:**\n\n" +
+                        "🍏 **Если ваша цель — похудение:**\n" +
+                        "Для похудения рекомендуется снизить потребление калорий. Чтобы терять вес, потребляйте около %.2f ккал в день. Это позволит создать дефицит калорий, что приведет к потере массы.\n\n" +
+                        "🍎 **Если ваша цель — набор массы:**\n" +
+                        "Для набора массы рекомендуется увеличить потребление калорий. Чтобы набирать массу, потребляйте около %.2f ккал в день. Это создаст избыток калорий, что поможет вашему организму набирать мышечную массу.\n\n",
+                bmr, userData.getActivityLevel(), totalKBZU, caloriesToLoseWeight, caloriesToGainWeight
+        );
+
+
+        // Кнопка для возврата в главное меню
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+        InlineKeyboardButton backButton = new InlineKeyboardButton();
+        backButton.setText("🔙 Назад в главное меню");
+        backButton.setCallbackData("BACK_TO_MAIN_MENU");
+        buttons.add(Collections.singletonList(backButton));
+        markup.setKeyboard(buttons);
+
+        sendMessageWithKeyboard(chatId, resultMessage, markup);
     }
 
+
+    private void sendMessageWithKeyboard(long chatId, String text, InlineKeyboardMarkup keyboard) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(text);
+        message.setReplyMarkup(keyboard);
+        message.enableHtml(true); // Включаем HTML-разметку, если нужно
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     private void askForHeight(long chatId) {
@@ -177,6 +385,55 @@ public class FoodMasterBot extends TelegramLongPollingBot {
     private void handleUserInput(long chatId, String userMessage) {
         String state = userStates.get(chatId);
 
+        if (state != null && state.equals("AWAITING_INGREDIENTS")) {
+            String ingredients = userMessage.trim(); // Получаем список ингредиентов
+
+            if (!ingredients.isEmpty()) {
+                String recipes = spoonacularService.getRecipesByIngredients(ingredients); // Получаем рецепты по ингредиентам
+
+                if (recipes != null && !recipes.isEmpty()) {
+                    // Если рецепты найдены, отправляем их пользователю
+                    sendMessage(chatId, "Вот рецепты с вашими ингредиентами:\n" + recipes);
+                } else {
+                    // Если рецепты не найдены, отправляем сообщение
+                    sendMessage(chatId, "Извините, не удалось найти рецепты с такими ингредиентами.");
+                }
+            } else {
+                sendMessage(chatId, "❌ Пожалуйста, введите хотя бы один ингредиент.");
+            }
+
+            // Сбрасываем состояние пользователя после обработки
+            userStates.remove(chatId);
+            return;
+        }
+
+        // Проверка, ожидается ли ввод названия блюда
+        if (state != null && state.startsWith("AWAITING_DISH_NAME:")) {
+            String category = state.split(":")[1]; // Извлекаем категорию
+            String recipeMessage = spoonacularService.getRecipeByName(userMessage, category); // Поиск с категорией
+
+            if (recipeMessage != null && !recipeMessage.isEmpty()) {
+                InlineKeyboardButton tryAgainButton = new InlineKeyboardButton();
+                tryAgainButton.setText("🔄 Попробовать еще раз");
+                tryAgainButton.setCallbackData("TRY_AGAIN_BUTTON");
+
+                InlineKeyboardButton backButton = new InlineKeyboardButton();
+                backButton.setText("🔙 Назад в главное меню");
+                backButton.setCallbackData("BACK_TO_MAIN_MENU");
+
+                InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+                List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+                keyboard.add(Collections.singletonList(tryAgainButton));
+                keyboard.add(Collections.singletonList(backButton));
+                keyboardMarkup.setKeyboard(keyboard);
+
+                sendMessageWithKeyboard(chatId, recipeMessage, keyboardMarkup);
+            }
+
+            userStates.remove(chatId); // Сбрасываем состояние после поиска
+            return;
+        }
+
         try {
             int value = Integer.parseInt(userMessage);
             UserData userData = userDataMap.getOrDefault(chatId, new UserData());
@@ -211,6 +468,7 @@ public class FoodMasterBot extends TelegramLongPollingBot {
         }
     }
 
+
     private void saveGender(long chatId, String gender) {
         UserData userData = userDataMap.get(chatId);
         if (userData == null) return;
@@ -231,6 +489,7 @@ public class FoodMasterBot extends TelegramLongPollingBot {
 
         keyboard.add(Collections.singletonList(createButton("🔍 Поиск блюда", "SEARCH_RECIPE")));
         keyboard.add(Collections.singletonList(createButton("🍳 Поиск по ингредиентам", "SEARCH_BY_INGREDIENTS")));
+        keyboard.add(Collections.singletonList(createButton("⏱️ Найти блюдо по времени", "SEARCH_RECIPE_BY_TIME")));
         keyboard.add(Collections.singletonList(createButton("🎲 Случайный рецепт", "RANDOM_RECIPE")));
         keyboard.add(Collections.singletonList(createButton("📊 Рассчет нормы КБЖУ", "CALCULATE_KBZU_NORM")));
         keyboard.add(Collections.singletonList(createButton("🍴 Рассчет КБЖУ блюда", "CALCULATE_KBZU_RECIPE")));
