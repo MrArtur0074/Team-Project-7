@@ -31,7 +31,7 @@ public class FoodMasterBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotToken() {
-        return "7881995906:AAEXCt-6Xk3mB-Pf11hcrNiHWCfefXkyu2I";  // ЗАМЕНИ НА СВОЙ ТОКЕН
+        return "7881995906:AAEXCt-6Xk3mB-Pf11hcrNiHWCfefXkyu2I";
     }
 
     @Override
@@ -174,6 +174,17 @@ public class FoodMasterBot extends TelegramLongPollingBot {
                 SendMessage message = new SendMessage();
                 message.setChatId(chatId);
                 message.setText(recipes);
+
+                InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+                List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+                InlineKeyboardButton backButton = new InlineKeyboardButton();
+                backButton.setText("🔙 Назад в главное меню");
+                backButton.setCallbackData("BACK_TO_MAIN_MENU");
+
+                keyboard.add(Collections.singletonList(backButton));
+                inlineKeyboardMarkup.setKeyboard(keyboard);
+                message.setReplyMarkup(inlineKeyboardMarkup);
 
                 try {
                     execute(message);
@@ -393,13 +404,13 @@ public class FoodMasterBot extends TelegramLongPollingBot {
 
                 if (recipes != null && !recipes.isEmpty()) {
                     // Если рецепты найдены, отправляем их пользователю
-                    sendMessage(chatId, "Вот рецепты с вашими ингредиентами:\n" + recipes);
+                    sendMessageWithBackButton(chatId, recipes);
                 } else {
                     // Если рецепты не найдены, отправляем сообщение
-                    sendMessage(chatId, "Извините, не удалось найти рецепты с такими ингредиентами.");
+                    sendMessageWithBackButton(chatId, "Извините, не удалось найти рецепты с такими ингредиентами.");
                 }
             } else {
-                sendMessage(chatId, "❌ Пожалуйста, введите хотя бы один ингредиент.");
+                sendMessageWithBackButton(chatId, "❌ Пожалуйста, введите хотя бы один ингредиент.");
             }
 
             // Сбрасываем состояние пользователя после обработки
@@ -555,6 +566,35 @@ public class FoodMasterBot extends TelegramLongPollingBot {
         button.setCallbackData(callbackData);
         return button;
     }
+
+    private void sendMessageWithBackButton(Long chatId, String text) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(text);
+
+        // Создаем инлайн-клавиатуру с кнопкой "Назад"
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
+        InlineKeyboardButton backButton = new InlineKeyboardButton();
+        backButton.setText("🔙 Назад в главное меню");
+        backButton.setCallbackData("BACK_TO_MAIN_MENU");
+
+        keyboard.add(Collections.singletonList(backButton));
+        inlineKeyboardMarkup.setKeyboard(keyboard);
+        message.setReplyMarkup(inlineKeyboardMarkup);
+
+        executeMessage(message);
+    }
+
+    private void executeMessage(SendMessage message) {
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private void deleteMessage(long chatId, int messageId) {
         DeleteMessage deleteMessage = new DeleteMessage();

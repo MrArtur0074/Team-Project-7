@@ -8,6 +8,9 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 
 @Service
 public class SpoonacularService {
@@ -93,33 +96,40 @@ public class SpoonacularService {
     // Получение рецептов по ингредиентам
     public String getRecipesByIngredients(String ingredients) {
         try {
-            // Формируем запрос с ингредиентами
+            // Переводим ингредиенты на английский
+            String translatedIngredients = TranslatorService.translateToEnglish(ingredients);
+
+            // Кодируем ингредиенты для корректного URL
+            String encodedIngredients = URLEncoder.encode(translatedIngredients, StandardCharsets.UTF_8);
             String urlString = BASE_URL_SEARCH + "?apiKey=" + API_KEY +
-                    "&includeIngredients=" + ingredients.replace(" ", ",") +
+                    "&includeIngredients=" + encodedIngredients +
                     "&number=5"; // Ограничиваем количество рецептов
 
             // Отправляем запрос и получаем ответ
-            JSONArray results = sendApiRequest(urlString).getJSONArray("results");
+            JSONObject response = sendApiRequest(urlString);
 
-            // Если рецепты найдены
-            if (results.length() > 0) {
-                StringBuilder recipesList = new StringBuilder("🍽 Рецепты с вашими ингредиентами:\n\n");
+            if (!response.has("results")) {
+                return "❌ Ошибка: сервер не вернул данные о рецептах.";
+            }
 
-                // Перебираем рецепты
-                for (int i = 0; i < results.length(); i++) {
-                    JSONObject recipe = results.getJSONObject(i);
-                    String title = recipe.getString("title");
-                    int recipeId = recipe.getInt("id");
-                    String recipeUrl = "https://spoonacular.com/recipes/" + title.replace(" ", "-") + "-" + recipeId;
-
-                    // Добавляем рецепт в список
-                    recipesList.append(String.format("• %s\n  🔗 Рецепт: %s\n\n", title, recipeUrl));
-                }
-
-                return recipesList.toString();
-            } else {
+            JSONArray results = response.getJSONArray("results");
+            if (results.isEmpty()) {
                 return "❌ Не найдено рецептов, соответствующих ингредиентам.";
             }
+
+            // Формируем список рецептов
+            StringBuilder recipesList = new StringBuilder("🍽 Рецепты с вашими ингредиентами:\n\n");
+
+            for (int i = 0; i < results.length(); i++) {
+                JSONObject recipe = results.getJSONObject(i);
+                String title = recipe.getString("title");
+                int recipeId = recipe.getInt("id");
+                String recipeUrl = "https://spoonacular.com/recipes/" + title.replace(" ", "-") + "-" + recipeId;
+
+                recipesList.append(String.format("• %s\n  🔗 Рецепт: %s\n\n", title, recipeUrl));
+            }
+
+            return recipesList.toString();
         } catch (Exception e) {
             e.printStackTrace();
             return "❌ Произошла ошибка при получении рецептов.";
