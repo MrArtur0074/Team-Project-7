@@ -21,13 +21,13 @@ public class OpenAIService {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", "gpt-4-turbo");
         requestBody.put("messages", List.of(
-                Map.of("role", "system", "content", "Ты — эксперт по питанию. Определи, какие блюда есть на фото, и рассчитай примерное КБЖУ. "),
+                Map.of("role", "system", "content", "Ты — эксперт по питанию. Определи, какие блюда есть на фото, и рассчитай точное КБЖУ. "),
                 Map.of("role", "user", "content", List.of(
                         Map.of("type", "text", "text", "Какие блюда на фото? Укажи их КБЖУ."),
                         Map.of("type", "image_url", "image_url", Map.of("url", imageUrl))
                 ))
         ));
-        requestBody.put("max_tokens", 500);
+        requestBody.put("max_tokens", 600);
 
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 

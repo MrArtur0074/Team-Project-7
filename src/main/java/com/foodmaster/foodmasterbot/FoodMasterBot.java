@@ -72,7 +72,7 @@ public class FoodMasterBot extends TelegramLongPollingBot {
 
         if (!nutritionInfo.isEmpty()) {
             StringBuilder responseText = new StringBuilder("Вот расчет КБЖУ:\n");
-            nutritionInfo.forEach((key, value) -> responseText.append(key).append(": ").append(value).append("\n"));
+            nutritionInfo.forEach((key, value) -> responseText.append("▫ ").append(key).append(": *").append(value).append("*\n"));
             sendMessage(chatId, responseText.toString());
         } else {
             sendMessage(chatId, "Не удалось определить блюда на фото. Попробуйте ещё раз!");
@@ -107,7 +107,7 @@ public class FoodMasterBot extends TelegramLongPollingBot {
 
             if (message.hasText()) {
                 String text = message.getText();
-                if (text.equalsIgnoreCase("/start")) {
+                if (text.equalsIgnoreCase("/asdsadalksdjsaldjkasldjasldjasdask")) {
                     sendStartMenu(chatId);
                 }
             } else if (message.hasPhoto()) {
