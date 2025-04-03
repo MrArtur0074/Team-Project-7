@@ -1,4 +1,4 @@
-package com.foodmaster.foodmasterbot;
+package com.foodmaster.foodmasterbot.service;
 
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;

@@ -1,5 +1,6 @@
-package com.foodmaster.foodmasterbot;
+package com.foodmaster.foodmasterbot.service;
 
+import com.foodmaster.foodmasterbot.service.TranslatorService;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
@@ -136,7 +137,6 @@ public class SpoonacularService {
             return "❌ Произошла ошибка при получении рецептов.";
         }
     }
-
     // Получение рецептов по времени приготовления
     public String getRecipesByTime(String time) {
         try {
@@ -200,7 +200,6 @@ public class SpoonacularService {
         }
     }
 
-    // Метод для фильтрации рецептов по времени
     private boolean isRecipeWithinTimeRange(int readyInMinutes, String timeRange) {
         switch (timeRange) {
             case "TIME_15":
