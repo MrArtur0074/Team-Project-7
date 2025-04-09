@@ -11,3 +11,5 @@ class FoodMasterApplicationTests {
     }
 
 }
+
+//class for helth check
