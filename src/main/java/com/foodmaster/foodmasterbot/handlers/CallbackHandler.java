@@ -54,6 +54,12 @@ public class CallbackHandler {
                 userStateManager.setUserState(chatId, "AWAITING_INGREDIENTS");
                 break;
 
+            case "SEARCH_EXCLUDING_INGREDIENTS":
+                messageUtils.askExcludedIngredients(chatId);
+                userStateManager.setUserState(chatId, "AWAITING_EXCLUDED_INGREDIENTS");
+                break;
+
+
             case "BACK_TO_MAIN_MENU":
                 messageUtils.sendStartMenu(chatId);
                 break;

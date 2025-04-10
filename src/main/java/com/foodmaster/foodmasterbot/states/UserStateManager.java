@@ -46,6 +46,20 @@ public class UserStateManager {
             userStates.remove(chatId);
             return;
         }
+        if (state != null && state.equals("AWAITING_EXCLUDED_INGREDIENTS")) {
+            if (!userMessage.isEmpty()) {
+                String recipes = spoonacularService.getRecipesExcludingIngredients(userMessage);
+                if (recipes != null && !recipes.isEmpty()) {
+                    messageUtils.sendMessage(chatId, "Вот рецепты без этих ингредиентов:\n" + recipes);
+                } else {
+                    messageUtils.sendMessage(chatId, "Извините, не удалось найти рецепты без этих ингредиентов.");
+                }
+            } else {
+                messageUtils.sendMessage(chatId, "❌ Пожалуйста, введите хотя бы один ингредиент.");
+            }
+            userStates.remove(chatId);
+            return;
+        }
         if (state != null && state.startsWith("AWAITING_DISH_NAME:")) {
             String category = state.split(":")[1];
             String recipe = spoonacularService.getRecipeByName(userMessage, category);

@@ -137,6 +137,53 @@ public class SpoonacularService {
             return "❌ Произошла ошибка при получении рецептов.";
         }
     }
+
+    public String getRecipesExcludingIngredients(String excludedIngredients) {
+        try {
+            String translatedExcluded = TranslatorService.translateToEnglish(excludedIngredients);
+            String encodedExcluded = URLEncoder.encode(translatedExcluded, StandardCharsets.UTF_8);
+
+
+            String urlString = BASE_URL_SEARCH + "?apiKey=" + API_KEY +
+                    "&excludeIngredients=" + encodedExcluded +
+                    "&number=5";
+
+
+            JSONObject response = sendApiRequest(urlString);
+
+
+            if (!response.has("results")) {
+                return "❌ Ошибка: сервер не вернул данные о рецептах.";
+            }
+
+
+            JSONArray results = response.getJSONArray("results");
+            if (results.isEmpty()) {
+                return "❌ Не найдено рецептов без указанных ингредиентов.";
+            }
+
+
+            StringBuilder recipesList = new StringBuilder("🍽 Рецепты без указанных ингредиентов:\n\n");
+
+
+            for (int i = 0; i < results.length(); i++) {
+                JSONObject recipe = results.getJSONObject(i);
+                String title = recipe.getString("title");
+                int recipeId = recipe.getInt("id");
+                String recipeUrl = "https://spoonacular.com/recipes/" + title.replace(" ", "-") + "-" + recipeId;
+
+
+                recipesList.append(String.format("• %s\n  🔗 Рецепт: %s\n\n", title, recipeUrl));
+            }
+
+
+            return recipesList.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "❌ Произошла ошибка при получении рецептов.";
+        }
+    }
+
     // Получение рецептов по времени приготовления
     public String getRecipesByTime(String time) {
         try {

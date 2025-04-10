@@ -62,9 +62,11 @@ public class MessageUtils {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
-        // Убираем три кнопки
         keyboard.add(Collections.singletonList(createButton("🔍 Поиск блюда", "SEARCH_RECIPE")));
         keyboard.add(Collections.singletonList(createButton("🍳 Поиск по ингредиентам", "SEARCH_BY_INGREDIENTS")));
+        keyboard.add(Collections.singletonList(createButton("🚫 Исключить ингредиенты", "SEARCH_EXCLUDING_INGREDIENTS")));
+        keyboard.add(Collections.singletonList(createButton("⏱️ Найти блюдо по времени", "SEARCH_RECIPE_BY_TIME")));
+        keyboard.add(Collections.singletonList(createButton("🍽 Поиск рецептов по калориям", "SEARCH_RECIPE_BY_CALORIES")));
         keyboard.add(Collections.singletonList(createButton("🎲 Случайный рецепт", "RANDOM_RECIPE")));
         keyboard.add(Collections.singletonList(createButton("📊 Рассчет нормы КБЖУ", "CALCULATE_KBZU_NORM")));
         keyboard.add(Collections.singletonList(createButton("🍴 Рассчет КБЖУ блюда", "CALCULATE_KBZU_RECIPE")));
@@ -74,7 +76,6 @@ public class MessageUtils {
 
         executeMessage(message);
     }
-
     public void handleHelpCommand(long chatId) {
         String helpMessage = "👨‍🍳 Добро пожаловать в FoodMasterBot!\n" +
                 "Привет! Я помогу тебе найти рецепты и рассчитать нужные питательные вещества. Вот, что ты можешь сделать:\n" +
@@ -207,6 +208,16 @@ public class MessageUtils {
         markup.setKeyboard(rows);
         sendMessageWithKeyboard(chatId, "⏱️ Выберите время приготовления:", markup);
     }
+
+    public void askExcludedIngredients(long chatId) {
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(List.of(
+                List.of(createButton("🔙 Назад в главное меню", "BACK_TO_MAIN_MENU"))
+        ));
+
+        sendMessageWithKeyboard(chatId, "🙅 Введите ингредиенты, которые вы *не хотите видеть* в рецептах (через запятую):", markup);
+    }
+
 
     public InlineKeyboardMarkup createMoreBackKeyboard() {
         InlineKeyboardButton more = createButton("🔄 Еще", "MORE_RECIPE");
