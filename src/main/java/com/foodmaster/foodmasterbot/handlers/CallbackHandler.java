@@ -74,5 +74,52 @@ public class CallbackHandler {
                 break;
 
 
+
+
+            case "SEARCH_RECIPE_BY_CALORIES":  // Новый кейс для поиска по калориям
+                messageUtils.sendMessage(chatId, "🍽 Пожалуйста, введите максимальное количество калорий:");
+                userStateManager.setUserState(chatId, "AWAITING_CALORIES");
+                break;
+
+
+            case "BACK_TO_MAIN_MENU":
+                messageUtils.sendStartMenu(chatId);
+                break;
+
+
+            case "TRY_AGAIN_BUTTON":
+                messageUtils.sendMessage(chatId, "🔍 Пожалуйста, введите название блюда, которое вы хотите найти:");
+                userStateManager.setUserState(chatId, "AWAITING_DISH_NAME:");
+                break;
+
+
+            default:
+                if (callbackData.startsWith("CATEGORY_")) {
+                    String category = callbackData.replace("CATEGORY_", "");
+                    userStateManager.setUserState(chatId, "AWAITING_DISH_NAME:" + category);
+                    messageUtils.askForDishName(chatId, category);
+                } else if (callbackData.startsWith("TIME_")) {
+                    String recipes = spoonacularService.getRecipesByTime(callbackData);
+                    messageUtils.sendMessage(chatId, recipes);
+                } else if (callbackData.equals("GENDER_MALE") || callbackData.equals("GENDER_FEMALE")) {
+                    userStateManager.saveGender(chatId, callbackData);
+                } else if (callbackData.startsWith("ACTIVITY_")) {
+                    userStateManager.saveActivityLevel(chatId, callbackData);
+                } else if (callbackData.equals("CALCULATE_KBZU")) {
+                    userStateManager.calculateKBZU(chatId);
+                } else if (callbackData.startsWith("CUISINE_PAGE_")) {
+                    int page = Integer.parseInt(callbackData.replace("CUISINE_PAGE_", ""));
+                    int messageIdToDelete = query.getMessage().getMessageId();  // Получаем ID старого сообщения
+                    messageUtils.sendCuisineSelection(chatId, page, messageIdToDelete);
+                } else if (callbackData.startsWith("CUISINE_")) {
+                    String cuisine = callbackData.replace("CUISINE_", "");
+                    String recipes = spoonacularService.getRecipesByCuisine(cuisine);
+                    messageUtils.sendMessage(chatId, recipes);
+                }
+
+
+                break;
+        }
+    }
 }
 

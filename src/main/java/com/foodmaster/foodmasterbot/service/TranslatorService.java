@@ -51,5 +51,21 @@ public class TranslatorService {
         } else {
             throw new Exception("Ошибка в ответе от MyMemory API. Ответ не содержит ключ 'responseData'.");
         }
+
+    }
+    public static String translateToFrench(String text) throws Exception {
+        String encodedText = URLEncoder.encode(text, StandardCharsets.UTF_8);
+        String urlString = TRANSLATE_URL + "?q=" + encodedText;
+        URL url = new URL(urlString);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        String inputLine;
+        StringBuilder response = new StringBuilder();
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+
+
+        }
     }
 }

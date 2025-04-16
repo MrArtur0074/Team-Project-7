@@ -42,4 +42,14 @@ public class FoodMasterBot extends TelegramLongPollingBot {
             callbackHandler.handleCallback(update.getCallbackQuery());
         }
     }
+    public CommandHandler getCommandHandler() {
+        return commandHandler;
+
+
+    }
+    public CallbackHandler getCallbackHandler() {
+        return callbackHandler;
+    }
+    public UserStateManager getUserStateManager() {}
 }
+

@@ -46,4 +46,15 @@ public class UserData {
     public void setActivityLevel(String activityLevel) {
         this.activityLevel = activityLevel;
     }
+    public UserData(int height, int weight, int age, String gender, String activityLevel) {
+        super();
+        this.height = height;
+        this.weight = weight;
+        this.age = age;
+        this.gender = gender;
+
+
+        this.activityLevel = activityLevel;
+
+    }
 }

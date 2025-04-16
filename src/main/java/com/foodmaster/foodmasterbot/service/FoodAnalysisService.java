@@ -106,6 +106,8 @@ public class FoodAnalysisService {
             return Double.parseDouble(value.toString());
         } catch (NumberFormatException e) {
             return 0.0;
+
         }
+
     }
 }

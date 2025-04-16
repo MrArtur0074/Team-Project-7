@@ -231,6 +231,36 @@ public class MessageUtils {
     }
 
 
+    public void sendTimeSelection(long chatId) {
+        String[] labels = {"До 15 минут", "15-30 минут", "30-45 минут", "45-60 минут", "60 минут и больше"};
+        String[] callbacks = {"TIME_15", "TIME_15_30", "TIME_30_45", "TIME_45_60", "TIME_60"};
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        for (int i = 0; i < labels.length; i++) {
+            rows.add(Collections.singletonList(createButton(labels[i], callbacks[i])));
+        }
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(rows);
+        sendMessageWithKeyboard(chatId, "⏱️ Выберите время приготовления:", markup);
+    }
+
+
+    public void sendCuisineSelection(long chatId, int page, int messageIdToDelete) {
+        List<String> cuisines = List.of(
+                "American", "British", "Chinese", "European",
+                "French", "German", "Greek", "Italian",
+                "Japanese", "Korean", "Mexican", "Vietnamese"
+        );
+
+
+        int pageSize = 4;
+        int totalPages = (int) Math.ceil(cuisines.size() / (double) pageSize);
+        page = Math.max(0, Math.min(page, totalPages - 1)); // ensure valid page number
+
+
+        int start = page * pageSize;
+        int end = Math.min(start + pageSize, cuisines.size());
+        List<String> currentPageItems = cuisines.subList(start, end);
+
 
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
         for (String cuisine : currentPageItems) {

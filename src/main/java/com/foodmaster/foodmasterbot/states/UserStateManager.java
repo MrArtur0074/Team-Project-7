@@ -215,6 +215,12 @@ public class UserStateManager {
         userStates.put(chatId, "AWAITING_CALORIES");
         messageUtils.sendMessage(chatId, "⚡ Укажите, сколько калорий осталось (например, 400).");
     }
+    public void searchRecipeByCalories(long chatId) {
+        userStates.put(chatId, "AWAITING_CALORIES");
+
+
+    }
+
 
 
 }
