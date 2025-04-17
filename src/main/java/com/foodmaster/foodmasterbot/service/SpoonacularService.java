@@ -247,6 +247,49 @@ public class SpoonacularService {
         }
     }
 
+    public String getRecipesByCalories(int maxCalories) {
+        try {
+            // Формируем URL с фильтром по калориям
+            String urlString = BASE_URL_SEARCH + "?apiKey=" + API_KEY + "&maxCalories=" + maxCalories + "&number=5";
+
+
+            // Отправляем запрос и получаем ответ
+            JSONObject response = sendApiRequest(urlString);
+
+
+            if (!response.has("results")) {
+                return "❌ Ошибка: сервер не вернул данные о рецептах.";
+            }
+
+
+            JSONArray results = response.getJSONArray("results");
+            if (results.isEmpty()) {
+                return "❌ Не найдено рецептов, укладывающихся в этот лимит калорий.";
+            }
+
+
+            // Формируем список рецептов
+            StringBuilder recipesList = new StringBuilder("🍽 Рецепты с калориями в пределах вашего лимита:\n\n");
+
+
+            for (int i = 0; i < results.length(); i++) {
+                JSONObject recipe = results.getJSONObject(i);
+                String title = recipe.getString("title");
+                int recipeId = recipe.getInt("id");
+                String recipeUrl = "https://spoonacular.com/recipes/" + title.replace(" ", "-") + "-" + recipeId;
+
+
+                recipesList.append(String.format("• %s\n  🔗 Рецепт: %s\n\n", title, recipeUrl));
+            }
+
+
+            return recipesList.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "❌ Произошла ошибка при получении рецептов по калориям.";
+        }
+    }
+
     private boolean isRecipeWithinTimeRange(int readyInMinutes, String timeRange) {
         switch (timeRange) {
             case "TIME_15":

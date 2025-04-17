@@ -71,6 +71,20 @@ public class UserStateManager {
             userStates.remove(chatId);
             return;
         }
+        if (state != null && state.equals("AWAITING_CALORIES")) {
+            try {
+                int calories = Integer.parseInt(userMessage);
+                if (calories > 0) {
+                    messageUtils.searchRecipeByCalories(chatId, calories);
+                } else {
+                    messageUtils.sendMessage(chatId, "❌ Пожалуйста, укажите положительное число.");
+                }
+            } catch (NumberFormatException e) {
+                messageUtils.sendMessage(chatId, "❌ Введите корректное число.");
+            }
+            userStates.remove(chatId);
+            return;
+        }
         try {
             int value = Integer.parseInt(userMessage);
             UserData data = userDataMap.getOrDefault(chatId, new UserData());

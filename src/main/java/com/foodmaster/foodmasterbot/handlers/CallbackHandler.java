@@ -59,6 +59,10 @@ public class CallbackHandler {
                 userStateManager.setUserState(chatId, "AWAITING_EXCLUDED_INGREDIENTS");
                 break;
 
+            case "SEARCH_RECIPE_BY_CALORIES":  // Новый кейс для поиска по калориям
+                messageUtils.sendMessage(chatId, "🍽 Пожалуйста, введите максимальное количество калорий:");
+                userStateManager.setUserState(chatId, "AWAITING_CALORIES");
+                break;
 
             case "BACK_TO_MAIN_MENU":
                 messageUtils.sendStartMenu(chatId);

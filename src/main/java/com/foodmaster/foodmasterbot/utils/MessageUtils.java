@@ -232,6 +232,15 @@ public class MessageUtils {
         return button;
     }
 
+    public void searchRecipeByCalories(long chatId, int calories) {
+        String recipes = spoonacularService.getRecipesByCalories(calories);
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(List.of(
+                List.of(createButton("🔙 Назад в главное меню", "BACK_TO_MAIN_MENU"))
+        ));
+        sendMessageWithKeyboard(chatId, recipes, markup);
+    }
+
     public SpoonacularService getSpoonacularService() {
         return spoonacularService;
     }
