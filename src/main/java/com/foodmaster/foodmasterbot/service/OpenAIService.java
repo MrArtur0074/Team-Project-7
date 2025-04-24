@@ -21,7 +21,7 @@ public class OpenAIService {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", "gpt-4-turbo");
         requestBody.put("messages", List.of(
-                Map.of("role", "system", "content", "Ты — эксперт по питанию. Определи, какие блюда есть на фото, и рассчитай точное КБЖУ. "),
+                Map.of("role", "system", "content", "Ты — эксперт по питанию. Определи, какие блюда есть на фото, и рассчитай точное КБЖУ и отправь расчет полного блюдо если не смог определять КБЖУ полного блюдо то выведи примерный на столько то грамм. "),
                 Map.of("role", "user", "content", List.of(
                         Map.of("type", "text", "text", "Какие блюда на фото? Укажи их КБЖУ."),
                         Map.of("type", "image_url", "image_url", Map.of("url", imageUrl))
@@ -36,7 +36,8 @@ public class OpenAIService {
         if (response.getBody() != null && response.getBody().containsKey("choices")) {
             List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
             if (!choices.isEmpty()) {
-                String textResponse = choices.get(0).get("message").toString();
+                Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                String textResponse = (String) message.get("content");
                 return parseNutritionResponse(textResponse);
             }
         }

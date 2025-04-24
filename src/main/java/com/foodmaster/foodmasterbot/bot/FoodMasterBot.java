@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 public class FoodMasterBot extends TelegramLongPollingBot {
+    //class for
 
     @Autowired
     private CommandHandler commandHandler;
