@@ -1,5 +1,6 @@
 package com.foodmaster.foodmasterbot.states;
 
+
 import com.foodmaster.foodmasterbot.model.UserData;
 import com.foodmaster.foodmasterbot.service.SpoonacularService;
 import com.foodmaster.foodmasterbot.utils.MessageUtils;
@@ -7,8 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+
 import java.util.HashMap;
 import java.util.Map;
+
 
 @Component
 public class UserStateManager {
@@ -18,19 +21,24 @@ public class UserStateManager {
     private final Map<Long, String> userStates = new HashMap<>();
     private final Map<Long, UserData> userDataMap = new HashMap<>();
 
+
     @Autowired
     private SpoonacularService spoonacularService;
+
 
     public void setUserState(long chatId, String state) {
         userStates.put(chatId, state);
     }
 
+
     public String getUserState(long chatId) {
         return userStates.get(chatId);
     }
 
+
     public void handleUserInput(long chatId, String userMessage) {
         String state = getUserState(chatId);
+
 
         if (state != null && state.equals("AWAITING_INGREDIENTS")) {
             if (!userMessage.isEmpty()) {
@@ -46,6 +54,8 @@ public class UserStateManager {
             userStates.remove(chatId);
             return;
         }
+
+
         if (state != null && state.equals("AWAITING_EXCLUDED_INGREDIENTS")) {
             if (!userMessage.isEmpty()) {
                 String recipes = spoonacularService.getRecipesExcludingIngredients(userMessage);
@@ -60,6 +70,8 @@ public class UserStateManager {
             userStates.remove(chatId);
             return;
         }
+
+
         if (state != null && state.startsWith("AWAITING_DISH_NAME:")) {
             String category = state.split(":")[1];
             String recipe = spoonacularService.getRecipeByName(userMessage, category);
@@ -71,6 +83,8 @@ public class UserStateManager {
             userStates.remove(chatId);
             return;
         }
+
+
         if (state != null && state.equals("AWAITING_CALORIES")) {
             try {
                 int calories = Integer.parseInt(userMessage);
@@ -85,9 +99,14 @@ public class UserStateManager {
             userStates.remove(chatId);
             return;
         }
+
+
+
+
         try {
             int value = Integer.parseInt(userMessage);
             UserData data = userDataMap.getOrDefault(chatId, new UserData());
+
 
             switch (state) {
                 case "AWAITING_HEIGHT":
@@ -123,6 +142,7 @@ public class UserStateManager {
         }
     }
 
+
     public void saveGender(long chatId, String gender) {
         UserData data = userDataMap.get(chatId);
         if (data == null) return;
@@ -130,6 +150,7 @@ public class UserStateManager {
         userDataMap.put(chatId, data);
         askForActivityLevel(chatId);
     }
+
 
     public void saveActivityLevel(long chatId, String activity) {
         UserData data = userDataMap.get(chatId);
@@ -149,6 +170,7 @@ public class UserStateManager {
         messageUtils.sendFinalMessage(chatId, data);
     }
 
+
     public void calculateKBZU(long chatId) {
         UserData data = userDataMap.get(chatId);
         if (data == null) {
@@ -158,28 +180,42 @@ public class UserStateManager {
         messageUtils.sendKBZUResult(chatId, data);
     }
 
+
     private void askForWeight(long chatId) {
         userStates.put(chatId, "AWAITING_WEIGHT");
         messageUtils.sendMessage(chatId, "⚖️ Укажите ваш вес в килограммах (например, 70).");
     }
+
 
     private void askForAge(long chatId) {
         userStates.put(chatId, "AWAITING_AGE");
         messageUtils.sendMessage(chatId, "🎂 Укажите ваш возраст (например, 25).");
     }
 
+
     private void askForGender(long chatId) {
         userStates.put(chatId, "AWAITING_GENDER");
         messageUtils.sendGenderSelection(chatId);
     }
+
 
     private void askForActivityLevel(long chatId) {
         userStates.put(chatId, "AWAITING_ACTIVITY_LEVEL");
         messageUtils.sendActivityLevelSelection(chatId);
     }
 
+
     public void askForHeight(long chatId) {
         userStates.put(chatId, "AWAITING_HEIGHT");
         messageUtils.sendMessage(chatId, "📍 Укажите ваш рост в сантиметрах (например, 175).");
     }
+
+
+    public void askForCalories(long chatId) {
+        userStates.put(chatId, "AWAITING_CALORIES");
+        messageUtils.sendMessage(chatId, "⚡ Укажите, сколько калорий осталось (например, 400).");
+    }
+
+
 }
+

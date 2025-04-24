@@ -1,5 +1,6 @@
 package com.foodmaster.foodmasterbot.utils;
 
+
 import com.foodmaster.foodmasterbot.model.UserData;
 import com.foodmaster.foodmasterbot.service.SpoonacularService;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -13,18 +14,23 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.springframework.stereotype.Component;
 
+
 import java.util.*;
+
 
 @Component
 public class MessageUtils {
 
+
     private final SpoonacularService spoonacularService;
     private final BotExecutor botExecutor;
+
 
     public MessageUtils(SpoonacularService spoonacularService, BotExecutor botExecutor) {
         this.spoonacularService = spoonacularService;
         this.botExecutor = botExecutor;
     }
+
 
     public void sendMessage(long chatId, String text) {
         SendMessage message = new SendMessage();
@@ -32,6 +38,7 @@ public class MessageUtils {
         message.setText(text);
         executeMessage(message);
     }
+
 
     public void sendMessageWithKeyboard(long chatId, String text, InlineKeyboardMarkup keyboard) {
         SendMessage message = new SendMessage();
@@ -41,6 +48,7 @@ public class MessageUtils {
         message.enableMarkdown(true);
         executeMessage(message);
     }
+
 
     public void sendPhoto(Long chatId, InputFile photo) {
         SendPhoto sendPhoto = new SendPhoto();
@@ -53,26 +61,32 @@ public class MessageUtils {
         }
     }
 
+
     public void sendStartMenu(long chatId) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText("👋 Добро пожаловать в *FoodMaster*!\nВыберите одну из опций:");
         message.enableMarkdown(true);
 
+
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+
 
         keyboard.add(Collections.singletonList(createButton("🔍 Поиск блюда", "SEARCH_RECIPE")));
         keyboard.add(Collections.singletonList(createButton("🍳 Поиск по ингредиентам", "SEARCH_BY_INGREDIENTS")));
         keyboard.add(Collections.singletonList(createButton("🚫 Исключить ингредиенты", "SEARCH_EXCLUDING_INGREDIENTS")));
+        keyboard.add(Collections.singletonList(createButton("🌍 Поиск по кухне", "CUISINE_PAGE_0")));
         keyboard.add(Collections.singletonList(createButton("⏱️ Найти блюдо по времени", "SEARCH_RECIPE_BY_TIME")));
         keyboard.add(Collections.singletonList(createButton("🍽 Поиск рецептов по калориям", "SEARCH_RECIPE_BY_CALORIES")));
         keyboard.add(Collections.singletonList(createButton("🎲 Случайный рецепт", "RANDOM_RECIPE")));
         keyboard.add(Collections.singletonList(createButton("📊 Рассчет нормы КБЖУ", "CALCULATE_KBZU_NORM")));
         keyboard.add(Collections.singletonList(createButton("🍴 Рассчет КБЖУ блюда", "CALCULATE_KBZU_RECIPE")));
 
+
         markup.setKeyboard(keyboard);
         message.setReplyMarkup(markup);
+
 
         executeMessage(message);
     }
@@ -88,8 +102,10 @@ public class MessageUtils {
                 "\n" +
                 "Если у тебя возникнут вопросы, просто напиши мне! Я всегда готов помочь!";
 
+
         sendMessage(chatId, helpMessage);
     }
+
 
     public void sendFinalMessage(long chatId, UserData data) {
         String result = String.format(
@@ -104,18 +120,22 @@ public class MessageUtils {
                 data.getGender(), data.getActivityLevel()
         );
 
+
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(List.of(
                 List.of(createButton("📊 Рассчитать КБЖУ", "CALCULATE_KBZU"))
         ));
 
+
         sendMessageWithKeyboard(chatId, result, markup);
     }
+
 
     public void sendKBZUResult(long chatId, UserData data) {
         double bmr = data.getGender().equals("Мужской") ?
                 88.362 + (13.397 * data.getWeight()) + (4.799 * data.getHeight()) - (5.677 * data.getAge()) :
                 447.593 + (9.247 * data.getWeight()) + (3.098 * data.getHeight()) - (4.330 * data.getAge());
+
 
         double multiplier = switch (data.getActivityLevel()) {
             case "🥈 Средняя активность" -> 1.55;
@@ -123,9 +143,11 @@ public class MessageUtils {
             default -> 1.2;
         };
 
+
         double total = bmr * multiplier;
         double lose = total - total * 0.15;
         double gain = total + total * 0.15;
+
 
         String text = String.format(
                 "📊 Ваша норма КБЖУ:\n" +
@@ -136,17 +158,21 @@ public class MessageUtils {
                         "🍎 Для набора массы: %.2f ккал/день",
                 bmr, data.getActivityLevel(), total, lose, gain);
 
+
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(List.of(
                 List.of(createButton("🔙 Назад в главное меню", "BACK_TO_MAIN_MENU"))
         ));
 
+
         sendMessageWithKeyboard(chatId, text, markup);
     }
+
 
     public void requestPhoto(long chatId) {
         sendMessage(chatId, "📸 Пожалуйста, отправьте фото блюда.");
     }
+
 
     public void sendGenderSelection(long chatId) {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -155,6 +181,7 @@ public class MessageUtils {
         ));
         sendMessageWithKeyboard(chatId, "👤 Выберите ваш пол:", markup);
     }
+
 
     public void sendActivityLevelSelection(long chatId) {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -166,6 +193,7 @@ public class MessageUtils {
         sendMessageWithKeyboard(chatId, "🏃‍♀️ Выберите ваш уровень активности:", markup);
     }
 
+
     public void sendCategorySelection(long chatId) {
         String[] categories = {"Завтрак", "Обед", "Ужин", "Десерты", "Вегетарианское"};
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
@@ -173,11 +201,14 @@ public class MessageUtils {
             rows.add(Collections.singletonList(createButton(cat, "CATEGORY_" + cat.toUpperCase())));
         }
 
+
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(rows);
 
+
         sendMessageWithKeyboard(chatId, "🍽️ Выберите категорию блюда:", markup);
     }
+
 
     public void sendDishResult(long chatId, String recipe) {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -186,8 +217,10 @@ public class MessageUtils {
                 List.of(createButton("🔙 Назад в главное меню", "BACK_TO_MAIN_MENU"))
         ));
 
+
         sendMessageWithKeyboard(chatId, recipe, markup);
     }
+
 
     public void askForDishName(long chatId, String category) {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
@@ -196,6 +229,7 @@ public class MessageUtils {
         ));
         sendMessageWithKeyboard(chatId, "🔎 Введите название блюда в категории *" + category + "*:", markup);
     }
+
 
     public void sendTimeSelection(long chatId) {
         String[] labels = {"До 15 минут", "15-30 минут", "30-45 минут", "45-60 минут", "60 минут и больше"};
@@ -209,14 +243,69 @@ public class MessageUtils {
         sendMessageWithKeyboard(chatId, "⏱️ Выберите время приготовления:", markup);
     }
 
+
+    public void sendCuisineSelection(long chatId, int page, int messageIdToDelete) {
+        List<String> cuisines = List.of(
+                "American", "British", "Chinese", "European",
+                "French", "German", "Greek", "Italian",
+                "Japanese", "Korean", "Mexican", "Vietnamese"
+        );
+
+
+        int pageSize = 4;
+        int totalPages = (int) Math.ceil(cuisines.size() / (double) pageSize);
+        page = Math.max(0, Math.min(page, totalPages - 1)); // ensure valid page number
+
+
+        int start = page * pageSize;
+        int end = Math.min(start + pageSize, cuisines.size());
+        List<String> currentPageItems = cuisines.subList(start, end);
+
+
+        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
+        for (String cuisine : currentPageItems) {
+            keyboard.add(Collections.singletonList(createButton(cuisine, "CUISINE_" + cuisine.toUpperCase())));
+        }
+
+
+        List<InlineKeyboardButton> navigationRow = new ArrayList<>();
+        if (page > 0) {
+            navigationRow.add(createButton("⏮ Назад", "CUISINE_PAGE_" + (page - 1)));
+        }
+        if (page < totalPages - 1) {
+            navigationRow.add(createButton("⏭ Далее", "CUISINE_PAGE_" + (page + 1)));
+        }
+        keyboard.add(navigationRow);
+
+
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(keyboard);
+
+
+        // Удаляем старое сообщение
+        if (messageIdToDelete > 0) {
+            deleteMessage(chatId, messageIdToDelete);
+        }
+
+
+        // Отправляем новое сообщение с обновленной клавиатурой
+        sendMessageWithKeyboard(chatId, "🌍 Выберите кухню:", markup);
+    }
+
+
+
+
     public void askExcludedIngredients(long chatId) {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(List.of(
                 List.of(createButton("🔙 Назад в главное меню", "BACK_TO_MAIN_MENU"))
         ));
 
+
         sendMessageWithKeyboard(chatId, "🙅 Введите ингредиенты, которые вы *не хотите видеть* в рецептах (через запятую):", markup);
     }
+
+
 
 
     public InlineKeyboardMarkup createMoreBackKeyboard() {
@@ -225,12 +314,14 @@ public class MessageUtils {
         return new InlineKeyboardMarkup(List.of(List.of(more), List.of(back)));
     }
 
+
     public InlineKeyboardButton createButton(String text, String data) {
         InlineKeyboardButton button = new InlineKeyboardButton();
         button.setText(text);
         button.setCallbackData(data);
         return button;
     }
+
 
     public void searchRecipeByCalories(long chatId, int calories) {
         String recipes = spoonacularService.getRecipesByCalories(calories);
@@ -241,9 +332,11 @@ public class MessageUtils {
         sendMessageWithKeyboard(chatId, recipes, markup);
     }
 
+
     public SpoonacularService getSpoonacularService() {
         return spoonacularService;
     }
+
 
     private void executeMessage(SendMessage message) {
         try {
@@ -252,6 +345,7 @@ public class MessageUtils {
             e.printStackTrace();
         }
     }
+
 
     public void deleteMessage(long chatId, int messageId) {
         DeleteMessage delete = new DeleteMessage();
@@ -263,6 +357,7 @@ public class MessageUtils {
             e.printStackTrace();
         }
     }
+
 
     public String getFileUrl(String fileId) {
         try {
@@ -276,3 +371,4 @@ public class MessageUtils {
         }
     }
 }
+
