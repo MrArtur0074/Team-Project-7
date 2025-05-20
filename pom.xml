@@ -55,6 +55,12 @@
             <version>6.7.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.alphacephei</groupId>
+            <artifactId>vosk</artifactId>
+            <version>0.3.45</version>
+        </dependency>
+
         <!-- SLF4J для логирования -->
         <dependency>
             <groupId>org.slf4j</groupId>

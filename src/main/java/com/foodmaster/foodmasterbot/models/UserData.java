@@ -1,4 +1,4 @@
-package com.foodmaster.foodmasterbot.model;
+package com.foodmaster.foodmasterbot.models;
 
 public class UserData {
     private int height;

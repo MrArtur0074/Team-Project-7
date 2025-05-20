@@ -1,7 +1,7 @@
 package com.foodmaster.foodmasterbot.states;
 
 
-import com.foodmaster.foodmasterbot.model.UserData;
+import com.foodmaster.foodmasterbot.models.UserData;
 import com.foodmaster.foodmasterbot.service.SpoonacularService;
 import com.foodmaster.foodmasterbot.utils.MessageUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,46 +100,53 @@ public class UserStateManager {
             return;
         }
 
+        if ("AWAITING_HEIGHT".equals(state)
+                || "AWAITING_WEIGHT".equals(state)
+                || "AWAITING_AGE".equals(state)) {
 
+            try {
+                int value = Integer.parseInt(userMessage);
+                UserData data = userDataMap.getOrDefault(chatId, new UserData());
 
-
-        try {
-            int value = Integer.parseInt(userMessage);
-            UserData data = userDataMap.getOrDefault(chatId, new UserData());
-
-
-            switch (state) {
-                case "AWAITING_HEIGHT":
-                    if (value >= 50 && value <= 250) {
-                        data.setHeight(value);
-                        userDataMap.put(chatId, data);
-                        askForWeight(chatId);
-                    } else {
-                        messageUtils.sendMessage(chatId, "❌ Рост должен быть в диапазоне 50-250 см.");
-                    }
-                    break;
-                case "AWAITING_WEIGHT":
-                    if (value >= 20 && value <= 300) {
-                        data.setWeight(value);
-                        userDataMap.put(chatId, data);
-                        askForAge(chatId);
-                    } else {
-                        messageUtils.sendMessage(chatId, "❌ Вес должен быть в диапазоне 20-300 кг.");
-                    }
-                    break;
-                case "AWAITING_AGE":
-                    if (value >= 5 && value <= 120) {
-                        data.setAge(value);
-                        userDataMap.put(chatId, data);
-                        askForGender(chatId);
-                    } else {
-                        messageUtils.sendMessage(chatId, "❌ Возраст должен быть в диапазоне 5-120 лет.");
-                    }
-                    break;
+                switch (state) {
+                    case "AWAITING_HEIGHT":
+                        if (value >= 50 && value <= 250) {
+                            data.setHeight(value);
+                            userDataMap.put(chatId, data);
+                            askForWeight(chatId);
+                        } else {
+                            messageUtils.sendMessage(chatId, "❌ Рост должен быть в диапазоне 50-250 см.");
+                        }
+                        break;
+                    case "AWAITING_WEIGHT":
+                        if (value >= 20 && value <= 300) {
+                            data.setWeight(value);
+                            userDataMap.put(chatId, data);
+                            askForAge(chatId);
+                        } else {
+                            messageUtils.sendMessage(chatId, "❌ Вес должен быть в диапазоне 20-300 кг.");
+                        }
+                        break;
+                    case "AWAITING_AGE":
+                        if (value >= 5 && value <= 120) {
+                            data.setAge(value);
+                            userDataMap.put(chatId, data);
+                            askForGender(chatId);
+                        } else {
+                            messageUtils.sendMessage(chatId, "❌ Возраст должен быть в диапазоне 5-120 лет.");
+                        }
+                        break;
+                }
+            } catch (NumberFormatException e) {
+                messageUtils.sendMessage(chatId, "❌ Введите корректное число.");
             }
-        } catch (NumberFormatException e) {
-            messageUtils.sendMessage(chatId, "❌ Введите корректное число.");
+            return;
         }
+
+        // 3) Всё остальное — неизвестная команда
+        messageUtils.sendMessage(chatId,
+                "🤖 Извините, я не понял команду. " +
+                        "Пожалуйста, выберите действие из меню или воспользуйтесь доступными кнопками.");
     }
 
 

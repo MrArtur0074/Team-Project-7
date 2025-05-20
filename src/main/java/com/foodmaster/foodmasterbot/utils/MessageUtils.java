@@ -1,7 +1,7 @@
 package com.foodmaster.foodmasterbot.utils;
 
 
-import com.foodmaster.foodmasterbot.model.UserData;
+import com.foodmaster.foodmasterbot.models.UserData;
 import com.foodmaster.foodmasterbot.service.SpoonacularService;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.objects.File;
