@@ -1,0 +1,18 @@
+networks:
+  dev:
+
+services:
+  app:
+    build:
+      context: .
+      network: host  
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - dev
+
+
+volumes:
+  postgres_data:
